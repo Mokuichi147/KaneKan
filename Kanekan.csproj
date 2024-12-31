@@ -8,6 +8,13 @@
 
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
     <PackageReference Include="MudBlazor" Version="7.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Data\*">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 </Project>
