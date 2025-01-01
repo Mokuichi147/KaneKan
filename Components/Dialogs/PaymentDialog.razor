@@ -1,0 +1,226 @@
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="3" Class="align-content-center">
+                <MudText Align="Align.Right">用途*</MudText>
+            </MudItem>
+            <MudItem xs="9">
+                <MudTextField @bind-Value="name" Required />
+            </MudItem>
+
+            <MudItem xs="3" Class="align-content-center">
+                <MudText Align="Align.Right">金額*</MudText>
+            </MudItem>
+            <MudItem xs="9">
+                <MudStack Row>
+                    <div style="max-width: 130px;">
+                        <MudNumericField @bind-Value="amount" Step="10" Format="N0" Required />
+                    </div>
+                    <MudText>円(税込)</MudText>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="3" Class="align-content-center">
+                <MudText Align="Align.Right">支払い*</MudText>
+            </MudItem>
+            <MudItem xs="9">
+                <MudChipSet T="bool" @bind-SelectedValue="isPaid" SelectionMode="SelectionMode.SingleSelection" Variant="Variant.Text">
+                    <MudChip Color="Color.Primary" Value="true">支払い済み</MudChip>
+                    <MudChip Color="Color.Secondary" Value="false">未支払い(購入予定)</MudChip>
+                </MudChipSet>
+            </MudItem>
+
+            <MudItem xs="3" Style="max-height: 56px;" Class="align-content-end">
+                <MudText Align="Align.Right">支払い方法</MudText>
+            </MudItem>
+            <MudItem xs="9">
+                <MudStack Row>
+                    <MudChipSet T="string" @bind-SelectedValue="paymentMethod" SelectionMode="SelectionMode.SingleSelection" Variant="Variant.Text" Class="mr-n3">
+                        @foreach (var paymentMethod in paymentMethodList)
+                        {
+                            <MudChip Value="@paymentMethod" Color="Color.Primary" Variant="Variant.Text">@paymentMethod</MudChip>
+                        }
+                    </MudChipSet>
+                    <MudSpacer />
+                    <div style="width: 50px; height: 50px;">
+                        <MudFab variant="Variant.Filled" OnClick="OpenAddPaymentMethodDialogAsync" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Primary" Size="Size.Small" />
+                    </div>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="3" Class="align-content-center">
+                <MudText Align="Align.Right">支払日</MudText>
+            </MudItem>
+            <MudItem xs="9">
+                <div style="max-width: 170px;">
+                    <MudDatePicker @bind-Date="paymentAt" Editable Clearable ShowToolbar="false" />
+                </div>
+            </MudItem>
+
+            <MudItem xs="3" Style="max-height: 56px;" Class="align-content-end">
+                <MudText Align="Align.Right">分類</MudText>
+            </MudItem>
+            <MudItem xs="9">
+                <MudStack Row>
+                    <MudChipSet @bind-SelectedValues="categories" SelectionMode="SelectionMode.MultiSelection" Variant="Variant.Text" Class="mr-n3">
+                        @foreach (var category in categoryList)
+                        {
+                            <MudChip Value="@category" Color="Color.Primary" Variant="Variant.Text">@category</MudChip>
+                        }
+                    </MudChipSet>
+                    <MudSpacer />
+                    <div style="width: 50px; height: 50px;">
+                        <MudFab variant="Variant.Filled" OnClick="OpenAddCategoriesDialogAsync" StartIcon="@Icons.Material.Filled.Add" IconColor="Color.Primary" Size="Size.Small" />
+                    </div>
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="3" Style="max-height: 60px;" Class="align-content-end">
+                <MudText Align="Align.Right">補足情報</MudText>
+            </MudItem>
+            <MudItem xs="9">
+                <MudTextField @bind-Value="description" Margin="Margin.Dense" Variant="Variant.Outlined" Lines="5" Clearable />
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">キャンセル</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">保存</MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    public Payment? Payment { get; set; }
+
+    private List<string> categoryList = Backend.AppDatabase.GetCategories();
+    private List<string> paymentMethodList = Backend.AppDatabase.GetPaymentMethods();
+
+    private DateTime? paymentAt { get; set; } = DateTime.Now.Date;
+    private bool isPaid { get; set; } = true;
+    private string name { get; set; } = string.Empty;
+    private int amount { get; set; }
+    private string? paymentMethod { get; set; }
+    private string? description { get; set; }
+    private IReadOnlyCollection<string> categories { get; set; } = [];
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        if (Payment == null)
+        {
+            return;
+        }
+
+        paymentAt = Payment.PaymentAt;
+        isPaid = Payment.IsPaid;
+        name = Payment.Name;
+        amount = Payment.Amount;
+        paymentMethod = Payment.PaymentMethod;
+        description = Payment.Description;
+        categories = Payment.Categories;
+    }
+
+    private async Task OpenAddCategoriesDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialogReference = await DialogService.ShowAsync<Dialogs.InputTextDialog>("分類の新規作成", options);
+        var result = await dialogReference.Result;
+        if (result == null || result.Canceled)
+        {
+            return;
+        }
+
+        var category = result.Data as string;
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            Snackbar.Add("分類名に問題があります", Severity.Warning);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        else if (categoryList.Contains(category))
+        {
+            Snackbar.Add("既に存在する分類名です", Severity.Warning);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        categoryList.Add(category);
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+    private async Task OpenAddPaymentMethodDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var dialogReference = await DialogService.ShowAsync<Dialogs.InputTextDialog>("支払い方法の新規作成", options);
+        var result = await dialogReference.Result;
+        if (result == null || result.Canceled)
+        {
+            return;
+        }
+
+        var _paymentMethod = result.Data as string;
+        if (string.IsNullOrWhiteSpace(_paymentMethod))
+        {
+            Snackbar.Add("支払い方法名に問題があります", Severity.Warning);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+        else if (paymentMethodList.Contains(_paymentMethod))
+        {
+            Snackbar.Add("既に存在する支払い方法名です", Severity.Warning);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        paymentMethodList.Add(_paymentMethod);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Submit()
+    {
+        Payment payment;
+        if (Payment == null)
+        {
+            payment = new()
+            {
+                CreatedAt = DateTime.Now,
+                Name = name,
+            };
+        }
+        else
+        {
+            payment = Payment;
+        }
+
+        payment.PaymentAt = paymentAt;
+        payment.IsPaid = isPaid;
+        payment.Name = name;
+        payment.Amount = amount;
+        payment.PaymentMethod = paymentMethod;
+        payment.Description = description;
+        payment.Categories = [.. categories];
+
+        if (!Backend.Checker.IsPassedPayment(payment))
+        {
+            Snackbar.Add("入力内容に不備があります", Severity.Warning);
+            return;
+        }
+
+        await Backend.AppDatabase.SavePayment(payment);
+        MudDialog?.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog?.Cancel();
+    }
+}

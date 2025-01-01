@@ -1,0 +1,39 @@
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudStack>
+            <MudText>項目を入力してください</MudText>
+            <MudDivider />
+            <MudTextField @bind-Value="text" Required />
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">キャンセル</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">保存</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance? MudDialog { get; set; }
+
+    private string text { get; set; } = "";
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            Snackbar.Add("項目が空です", Severity.Warning);
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        MudDialog?.Close(DialogResult.Ok(text));
+    }
+
+    private void Cancel()
+    {
+        MudDialog?.Cancel();
+    }
+}
