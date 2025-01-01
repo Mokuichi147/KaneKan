@@ -1,4 +1,4 @@
-namespace Kanekan.Backend;
+namespace KaneKan.Backend;
 
 public static class Checker
 {

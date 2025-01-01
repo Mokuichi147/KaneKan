@@ -1,6 +1,6 @@
-using Kanekan.Models;
+using KaneKan.Models;
 
-namespace Kanekan.Backend;
+namespace KaneKan.Backend;
 
 public static class AppDatabase
 {

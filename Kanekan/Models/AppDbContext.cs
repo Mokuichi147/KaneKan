@@ -1,10 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Kanekan.Models
+namespace KaneKan.Models
 {
     public class AppDbContext : DbContext
     {
-        private string filename = Path.Join("Data", "Kanekan.sqlite3");
+        private string filename = Path.Join("Data", "KaneKan.sqlite3");
         private string connectionString;
 
         public DbSet<Payment> Payments { get; set; } = null!;

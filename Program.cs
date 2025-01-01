@@ -1,5 +1,5 @@
 using MudBlazor.Services;
-using Kanekan.Components;
+using KaneKan.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
