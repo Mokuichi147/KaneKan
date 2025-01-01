@@ -11,7 +11,7 @@
 
 ```
 git clone https://github.com/Mokuichi147/KaneKan.git
-cd KaneKan/KaneKan
+cd KaneKan
 dotnet restore
 ```
 
@@ -25,4 +25,9 @@ dotnet watch
 ビルド
 ```
 dotnet build
+```
+
+リリース
+```
+dotnet publish
 ```
